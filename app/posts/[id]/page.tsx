@@ -6,14 +6,19 @@ import NotionRenderer from "@/components/NotionRenderer";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 60;
+export const dynamicParams = true;
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export async function generateStaticParams() {
-  const pages = await fetchPages();
-  return pages.map((page) => ({ id: page.id }));
+  try {
+    const pages = await fetchPages();
+    return pages.map((page) => ({ id: page.id }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -37,10 +42,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PostPage({ params }: PageProps) {
   const { id } = await params;
-  const [pages, blocks] = await Promise.all([
-    fetchPages(),
-    fetchPageContent(id),
-  ]);
+
+  let pages: import("@/types/post").Post[] = [];
+  let blocks: import("@/types/post").NotionBlock[] = [];
+  try {
+    [pages, blocks] = await Promise.all([fetchPages(), fetchPageContent(id)]);
+  } catch {
+    notFound();
+  }
 
   const postIndex = pages.findIndex((p) => p.id === id);
   if (postIndex === -1) notFound();

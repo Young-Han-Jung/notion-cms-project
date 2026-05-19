@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fetchPages, fetchCategories } from "@/lib/notion";
 import CategoryFilter from "@/components/CategoryFilter";
 import PostListSection from "@/components/PostListSection";
+import type { Post } from "@/types/post";
 
 export const revalidate = 60;
 
@@ -11,10 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [posts, categories] = await Promise.all([
-    fetchPages(),
-    fetchCategories(),
-  ]);
+  let posts: Post[] = [];
+  let categories: string[] = [];
+
+  try {
+    [posts, categories] = await Promise.all([fetchPages(), fetchCategories()]);
+  } catch {
+    // Notion API 연결 실패 시 빈 목록으로 표시
+  }
 
   return (
     <main className="flex-1 container mx-auto px-4 py-8">

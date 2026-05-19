@@ -4,16 +4,21 @@ import PostCard from "@/components/PostCard";
 import CategoryFilter from "@/components/CategoryFilter";
 
 export const revalidate = 60;
+export const dynamicParams = true;
 
 interface PageProps {
   params: Promise<{ category: string }>;
 }
 
 export async function generateStaticParams() {
-  const categories = await fetchCategories();
-  return categories.map((category) => ({
-    category: encodeURIComponent(category),
-  }));
+  try {
+    const categories = await fetchCategories();
+    return categories.map((category) => ({
+      category: encodeURIComponent(category),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -29,10 +34,13 @@ export default async function CategoryPage({ params }: PageProps) {
   const { category } = await params;
   const decoded = decodeURIComponent(category);
 
-  const [allPosts, categories] = await Promise.all([
-    fetchPages(),
-    fetchCategories(),
-  ]);
+  let allPosts: import("@/types/post").Post[] = [];
+  let categories: string[] = [];
+  try {
+    [allPosts, categories] = await Promise.all([fetchPages(), fetchCategories()]);
+  } catch {
+    // Notion API 연결 실패 시 빈 목록으로 표시
+  }
 
   const posts = allPosts.filter((p) => p.category === decoded);
 
