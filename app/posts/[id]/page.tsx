@@ -23,21 +23,23 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const pages = await fetchPages();
-  const post = pages.find((p) => p.id === id);
-
-  if (!post) return {};
-
-  return {
-    title: post.title,
-    description: `${post.category ?? ""} ${post.tags.join(", ")}`.trim(),
-    openGraph: {
+  try {
+    const pages = await fetchPages();
+    const post = pages.find((p) => p.id === id);
+    if (!post) return {};
+    return {
       title: post.title,
       description: `${post.category ?? ""} ${post.tags.join(", ")}`.trim(),
-      type: "article",
-      publishedTime: post.publishedAt ?? undefined,
-    },
-  };
+      openGraph: {
+        title: post.title,
+        description: `${post.category ?? ""} ${post.tags.join(", ")}`.trim(),
+        type: "article",
+        publishedTime: post.publishedAt ?? undefined,
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function PostPage({ params }: PageProps) {

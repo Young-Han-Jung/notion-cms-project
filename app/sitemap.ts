@@ -5,7 +5,12 @@ export const revalidate = 60;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://localhost:3000";
-  const posts = await fetchPages();
+  let posts: import("@/types/post").Post[] = [];
+  try {
+    posts = await fetchPages();
+  } catch {
+    // API 연결 실패 시 홈 페이지만 포함
+  }
 
   const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/posts/${post.id}`,
