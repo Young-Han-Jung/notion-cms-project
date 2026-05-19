@@ -7,7 +7,7 @@ import type {
 import type { Post, NotionBlock } from "@/types/post";
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
-const dataSourceId = process.env.NOTION_DATABASE_ID!;
+const databaseId = process.env.NOTION_DATABASE_ID!;
 
 function toPost(page: PageObjectResponse): Post {
   const props = page.properties;
@@ -52,21 +52,9 @@ function toNotionBlock(
   return block as NotionBlock;
 }
 
-function isPageObjectResponse(
-  result: unknown
-): result is PageObjectResponse {
-  return (
-    typeof result === "object" &&
-    result !== null &&
-    "object" in result &&
-    (result as Record<string, unknown>).object === "page" &&
-    "properties" in result
-  );
-}
-
 export async function fetchPages(): Promise<Post[]> {
-  const response = await notion.dataSources.query({
-    data_source_id: dataSourceId,
+  const response = await notion.databases.query({
+    database_id: databaseId,
     filter: {
       property: "Status",
       select: { equals: "발행됨" },
@@ -75,7 +63,7 @@ export async function fetchPages(): Promise<Post[]> {
   });
 
   return response.results
-    .filter(isPageObjectResponse)
+    .filter((p): p is PageObjectResponse => "properties" in p)
     .map(toPost);
 }
 
